@@ -3,12 +3,14 @@ import 'dotenv/config';
 export interface JiraIssue {
   key: string;
   summary: string;
+  statusChangeDate?: string;
 }
 
 interface JiraApiResponse {
   key: string;
   fields: {
     summary: string;
+    statuscategorychangedate?: string;
   };
 }
 
@@ -83,7 +85,7 @@ export async function fetchAssignedInProgressIssues(): Promise<JiraIssue[]> {
   }
 
   const jql = `assignee = "${email}" AND status = "In Progress" ORDER BY updated DESC`;
-  const url = `https://${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary,status&maxResults=50`;
+  const url = `https://${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary,status,statuscategorychangedate&maxResults=50`;
 
   try {
     const response = await fetch(url, { headers: getAuthHeaders() });
@@ -99,6 +101,7 @@ export async function fetchAssignedInProgressIssues(): Promise<JiraIssue[]> {
     return data.issues.map((issue) => ({
       key: issue.key,
       summary: issue.fields.summary,
+      statusChangeDate: issue.fields.statuscategorychangedate,
     }));
   } catch (err) {
     console.error('Jira fetch error:', err);
