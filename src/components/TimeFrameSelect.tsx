@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
-import { Box, Text, useInput } from 'ink';
+import {
+  Box,
+  Text,
+  useInput,
+} from 'ink';
 
 import { QuestionLine } from './QuestionLine.js';
 

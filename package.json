@@ -1,7 +1,10 @@
 {
-  "name": "ink-tui-starter",
+  "name": "wdid",
   "version": "1.0.0",
   "type": "module",
+  "bin": {
+    "wdid": "./dist/index.js"
+  },
   "scripts": {
     "dev": "tsx src/index.tsx",
     "build": "tsc",

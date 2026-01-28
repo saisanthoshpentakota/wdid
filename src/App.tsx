@@ -1,22 +1,40 @@
-import { useState, useEffect } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import {
   Box,
+  Text,
   useApp,
   useInput,
-  useStdout,
 } from 'ink';
 
 import {
+  AssignedTicketList,
   Banner,
-  BANNER_HEIGHT,
+  CommitAnalytics,
   CommitList,
+  JiraTicketList,
   LoadingMessages,
   QuestionLine,
   TimeFrame,
   TimeFrameSelect,
 } from './components/index.js';
-import { fetchCommits, getAuthor, Commit } from './services/index.js';
+import {
+  Commit,
+  fetchAssignedInProgressIssues,
+  fetchCommits,
+  fetchJiraIssues,
+  getAuthor,
+  JiraIssue,
+} from './services/index.js';
+import {
+  countWorkingDays,
+  groupCommitsByDay,
+  groupCommitsByTicket,
+} from './utils/index.js';
 
 const TIME_FRAME_LABELS: Record<TimeFrame, string> = {
   '1week': '1 week',
@@ -38,10 +56,24 @@ type Screen = 'timeframe' | 'loading' | 'results';
 
 export default function App() {
   const { exit } = useApp();
-  const { stdout } = useStdout();
   const [screen, setScreen] = useState<Screen>('timeframe');
   const [timeFrame, setTimeFrame] = useState<TimeFrame | null>(null);
   const [commits, setCommits] = useState<Commit[]>([]);
+  const [jiraIssues, setJiraIssues] = useState<Map<string, JiraIssue>>(new Map());
+  const [assignedTickets, setAssignedTickets] = useState<JiraIssue[]>([]);
+  const [dateRange, setDateRange] = useState<{ since: Date; until: Date } | null>(null);
+
+  const jiraTickets = useMemo(() => groupCommitsByTicket(commits), [commits]);
+
+  const analyticsData = useMemo(() => {
+    const workingDays = dateRange ? countWorkingDays(dateRange.since, dateRange.until) : 0;
+    return {
+      data: groupCommitsByDay(commits),
+      title: 'Commits per day:',
+      totalCommits: commits.length,
+      workingDays,
+    };
+  }, [commits, dateRange]);
 
   useInput((_, key) => {
     if (key.escape) {
@@ -61,13 +93,20 @@ export default function App() {
     const until = new Date();
     const since = new Date();
     since.setDate(since.getDate() - days);
+    setDateRange({ since, until });
 
-    fetchCommits({
-      author: getAuthor(),
-      since,
-      until,
-    }).then((result) => {
-      setCommits(result);
+    Promise.all([
+      fetchCommits({ author: getAuthor(), since, until }),
+      fetchAssignedInProgressIssues(),
+    ]).then(async ([commitsResult, assignedResult]) => {
+      setCommits(commitsResult);
+      setAssignedTickets(assignedResult);
+
+      const tickets = groupCommitsByTicket(commitsResult);
+      const ticketIds = tickets.map((t) => t.id);
+      const issues = await fetchJiraIssues(ticketIds);
+      setJiraIssues(issues);
+
       setScreen('results');
     });
   }, [screen, timeFrame]);
@@ -76,7 +115,7 @@ export default function App() {
     <>
       <Banner />
 
-      <Box flexDirection="column" height={stdout.rows - BANNER_HEIGHT} paddingX={1}>
+      <Box flexDirection="column" paddingX={1}>
         {screen === 'timeframe' ? (
           <TimeFrameSelect onSelect={handleTimeFrameSelect} />
         ) : (
@@ -85,15 +124,35 @@ export default function App() {
               question={QUESTIONS.timeFrame}
               answer={timeFrame ? TIME_FRAME_LABELS[timeFrame] : undefined}
             />
-            <Box marginTop={1}>
+            <Box marginTop={1} flexDirection="column" gap={1}>
               {screen === 'loading' ? (
                 <LoadingMessages />
               ) : (
-                <CommitList commits={commits} />
+                <>
+                  <CommitList commits={commits} />
+                  <Box marginTop={1}>
+                    <JiraTicketList tickets={jiraTickets} jiraIssues={jiraIssues} />
+                  </Box>
+                  <Box marginTop={1}>
+                    <AssignedTicketList tickets={assignedTickets} />
+                  </Box>
+                  <Box marginTop={1}>
+                    <CommitAnalytics
+                      data={analyticsData.data}
+                      title={analyticsData.title}
+                      totalCommits={analyticsData.totalCommits}
+                      workingDays={analyticsData.workingDays}
+                    />
+                  </Box>
+                </>
               )}
             </Box>
           </>
         )}
+      </Box>
+
+      <Box paddingX={1} marginTop={1}>
+        <Text dimColor>ctrl+c to exit</Text>
       </Box>
     </>
   );

@@ -16,20 +16,15 @@ export function CommitList({ commits }: CommitListProps) {
   }
 
   return (
-    <Box flexDirection="column" gap={1}>
+    <Box flexDirection="column">
       <Text bold color="green">Found {commits.length} commits:</Text>
-      {commits.map((commit) => (
-        <Box key={commit.sha} flexDirection="column">
-          <Box>
-            <Text color="cyan">{commit.repo}</Text>
-            <Text dimColor> • </Text>
-            <Text dimColor>{commit.sha.slice(0, 7)}</Text>
-          </Box>
-          <Box marginLeft={2}>
+      <Box flexDirection="column" marginTop={1}>
+        {commits.map((commit) => (
+          <Box key={commit.sha}>
             <Text>{commit.message}</Text>
           </Box>
-        </Box>
-      ))}
+        ))}
+      </Box>
     </Box>
   );
 }
