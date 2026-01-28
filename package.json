@@ -8,6 +8,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "figlet": "^1.10.0",
     "ink": "^5.0.1",
     "ink-spinner": "^5.0.0",
