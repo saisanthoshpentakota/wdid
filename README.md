@@ -2,7 +2,7 @@
 
 For when you forget what you did 5 minutes ago.
 
-A terminal UI tool that helps you remember what you actually worked on. It fetches your git commits and Jira tickets to give you a quick summary of your work — perfect for standups, timesheets, or just proving to yourself that you were productive.
+A terminal UI tool that helps you remember what you actually worked on. It fetches your git commits and Jira tickets to give you a quick summary of your work — perfect for standups, timesheets, seflreviews.
 
 ## Features
 
