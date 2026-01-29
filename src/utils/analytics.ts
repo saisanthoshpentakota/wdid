@@ -27,6 +27,7 @@ export function groupCommitsByDay(commits: Commit[]): DayCommitCount[] {
     .sort((a, b) => a[1].timestamp - b[1].timestamp)
     .map(([, { count, timestamp }]) => ({
       date: new Date(timestamp).toLocaleDateString('en-US', {
+        weekday: 'short',
         month: 'short',
         day: 'numeric',
       }),

@@ -27,7 +27,7 @@ export function CommitAnalytics({ data, title, totalCommits, workingDays }: Comm
   }
 
   const maxCount = Math.max(...data.map((d) => d.count));
-  const dateWidth = 8;
+  const dateWidth = 14;
   const avgPerDay = workingDays > 0 ? (totalCommits / workingDays).toFixed(1) : '0';
 
   return (

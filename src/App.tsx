@@ -18,6 +18,7 @@ import {
   CommitList,
   JiraTicketList,
   LoadingMessages,
+  PendingPRList,
   QuestionLine,
   TimeFrame,
   TimeFrameSelect,
@@ -27,8 +28,10 @@ import {
   fetchAssignedInProgressIssues,
   fetchCommits,
   fetchJiraIssues,
+  fetchPendingPRsByMe,
   getAuthor,
   JiraIssue,
+  PullRequest,
 } from './services/index.js';
 import {
   countWorkingDays,
@@ -61,6 +64,7 @@ export default function App() {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [jiraIssues, setJiraIssues] = useState<Map<string, JiraIssue>>(new Map());
   const [assignedTickets, setAssignedTickets] = useState<JiraIssue[]>([]);
+  const [pendingPRs, setPendingPRs] = useState<PullRequest[]>([]);
   const [dateRange, setDateRange] = useState<{ since: Date; until: Date } | null>(null);
 
   const jiraTickets = useMemo(() => groupCommitsByTicket(commits), [commits]);
@@ -98,9 +102,11 @@ export default function App() {
     Promise.all([
       fetchCommits({ author: getAuthor(), since, until }),
       fetchAssignedInProgressIssues(),
-    ]).then(async ([commitsResult, assignedResult]) => {
+      fetchPendingPRsByMe(),
+    ]).then(async ([commitsResult, assignedResult, pendingPRsResult]) => {
       setCommits(commitsResult);
       setAssignedTickets(assignedResult);
+      setPendingPRs(pendingPRsResult);
 
       const tickets = groupCommitsByTicket(commitsResult);
       const ticketIds = tickets.map((t) => t.id);
@@ -137,6 +143,9 @@ export default function App() {
                     <AssignedTicketList tickets={assignedTickets} />
                   </Box>
                   <Box marginTop={1}>
+                    <PendingPRList prs={pendingPRs} />
+                  </Box>
+                                    <Box marginTop={1}>
                     <CommitAnalytics
                       data={analyticsData.data}
                       title={analyticsData.title}
